@@ -112,7 +112,7 @@ proc sql로 시작하고, from 절에서 지정된 sasuser.payrollmaster 라는 
 - 사분위수, 백분위수(현상파악에서 제시)
 - 분산, 표준편차
 
-#### 3. 제 2장
+#### 3. 제 2장(160602)
 
 3.1 제 1종오류와 2종오류 사이에 놓인 “최강”:의 개념
 
@@ -139,3 +139,30 @@ proc sql로 시작하고, from 절에서 지정된 sasuser.payrollmaster 라는 
 
 - 쓸데없는 토론에 종지부를 찍는 것
 - ‘지금 우리가 수집할 수 있는 데이터의 범위 안에서’ 가설의 타당성에 초점을 맞춘다. 그 다음 내가 주장하는 가설을 완전히 번복하는 가설을 제시. 만약 내 주장을 완전히 번복하는 가설이 어느정도의 확률로 성립하는지를 얘기할 수 있다면, 상대가 내 주장을 완전히 번복하기는 어려움. 그 다음에 이를 “손해인가 이익인가”의 문제로 연결시킴.
+
+---------------------
+#### sas proc sql practice!(Enterprise Guide 5.1)
+
+data a;
+input id $ sex $ region $ car $ pay;
+cards;
+A F seoul bmw 5
+A F seoul audi 20
+A M busan bmw 100
+A F busan audi 150
+B F seoul bmw 200
+B F seoul audi 250
+C M seoul bmw 500
+D F seoul audi 1000
+;
+run;
+
+/* id, sex, region이 모두 일치하는 데이터에 대해 pay의 최대값이 있는 행만 추출하여 테이블 생성하기 */
+proc sql;
+create table b as
+select id, sex, region, car, pay, max(pay) as max_pay
+from a
+group by id, sex, region
+having pay=max_pay;
+quit;
+
