@@ -1,0 +1,84 @@
+libname gyp 'C:\Users\User\Downloads\01_과제공지 및 배포\saslib';
+/************************************AGE_10(연령대) 변수 생성*****************************************/
+/* AGE_10(연령대) 변수 생성, case when 이용*/
+proc sql;
+create table gyp.new_table as
+select *,
+			case when AGE<19 then "19세 미만"
+			when 20<=AGE<30 then "20세~29세"
+			when 30<=AGE<40 then "30세~39세"
+			when 40<=AGE<50 then "40세~49세"
+			when 50<=AGE<60 then "50세~59세"
+			when AGE>=60 then "60세 이상" end as AGE_10
+from gyp.cust_info;
+quit;
+/************************************JOIN_MONTH(가입개월수) 변수 생성*****************************************/
+/* cust_info 와 enter 데이터 join*/
+proc sql;
+create table gyp.new_table as
+select *
+from gyp.new_table, gyp.enter
+where new_table.CUST_ID=enter.CUST_ID;
+quit;
+/*JOIN_MONTH(가입개월수) 변수 생성을 위해 연도 및 월 변수 뽑아주기*/
+proc sql;
+create table gyp.new_table as
+select *, 
+			year(date()) as y_today, 
+			year(ENTER_DT) as y_enter,  
+			month(date()) as m_today,
+			month(ENTER_DT) as m_enter
+from gyp.new_table;
+quit;
+
+/*JOIN_MONTH(가입개월수) 변수 생성*/
+proc sql;
+create table gyp.new_table as
+select *,
+			(y_today-y_enter)*12+m_today-m_enter as JOIN_MONTH
+from gyp.new_table;
+quit;
+
+/************************************rcmd_cnt(추천횟수) 변수 생성*****************************************/
+/*rcmd_cnt(추천횟수) 변수 생성 - rcmd_id변수로 그룹 지어주고, 그룹내에서 rcmd_id를 count해서 새로운 데이터 셋을 만들어줌*/
+proc sql;
+create table gyp.rcmdset as
+select rcmd_id, count(rcmd_id) as rcmd_cnt
+from gyp.new_table
+group by rcmd_id;
+quit;
+/* rcmd_cnt(추천횟수) 변수 생성 - left join으로 cust_id와 rcmd_id 매칭*/
+/*****rcmd_cnt에서 0으로 표현되어야 할 값이 .으로 표현됨 -> case when으로 바꿔주어야 하나?******/
+proc sql;
+create table gyp.new_table2 as
+select new_table.CUST_ID, new_table.AGE, new_table.AGE_10, new_table.SEX as GENDER, new_table.AREA as PLACE, new_table.MARRY_YN, 
+		new_table.JOB, new_table.SCHOOL as ACHIEVEMENT, new_table.HOME as HOUSE , new_table.HOME_TYPE as HOUSE_TYPE, 
+		new_table.JOIN_MONTH, new_table.rcmd_id, rcmdset.rcmd_id, rcmdset.rcmd_cnt
+from gyp.new_table
+left join
+gyp.rcmdset
+on new_table.cust_id=rcmdset.rcmd_id;
+quit;
+/* table명 다시 new_table로 바꿔줌*/
+proc sql;
+create table gyp.new_table as
+select *
+from gyp.new_table2;
+quit;
+
+
+/************************************rcmd_amt(추천가입자 매출) 변수 생성*****************************************/
+/*new_table과 gumae, prd_info 데이터 조인*/
+proc sql;
+create table gyp.new_table as
+select *
+from gyp.new_table, gyp.gumae
+where new_table.CUST_ID=gumae.CUST_ID;
+quit;
+/* cust_id로 sorting해서 조인 잘 되었는지 확인*/
+proc sql;
+create table gyp.new_table as
+select *
+from gyp.new_table
+order by cust_id;
+quit;
