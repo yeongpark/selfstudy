@@ -82,3 +82,38 @@ select *
 from gyp.new_table
 order by cust_id;
 quit;
+/*new_table과 prd_info 데이터 조인*/
+proc sql;
+create table gyp.new_table as
+select *
+from gyp.new_table, gyp.prd_info
+where new_table.PRD_ID=prd_info.PRD_ID;
+quit;
+/*구매건 별 매출 변수(percost) 생성*/
+proc sql;
+create table gyp.costset as
+select *,gumae_cnt*cost as percost 
+from gyp.new_table;
+quit;
+/*cust_id 별 매출 합 sumcost 생성*/
+proc sql;
+create table gyp.costset as
+select *, sum(percost) as sumcost 
+from gyp.costset
+group by cust_id;
+quit;
+/* rcmd_id별 매출 합 rcmd_amt 생성*/
+proc sql;
+create table gyp.costset as
+select *, sum(percost) as rcmd_amt
+from gyp.costset
+group by rcmd_id
+order by rcmd_id; 
+quit;
+/* new_table에 costset을 cust_id=rcmd_id 기준으로 left join하여 cust_id에 해당하는 rcmd_amt를 매칭해줌*/
+proc sql;
+create table gyp.new_table3 as
+select new_table.cust_id, new_table.rcmd_id, costset.rcmd_id, costset.rcmd_amt
+from gyp.new_table left join gyp.costset
+on new_table.cust_id=costset.rcmd_id;
+quit;
